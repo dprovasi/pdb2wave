@@ -1,0 +1,93 @@
+---
+title: "Sonify from PDB"
+output: rmarkdown::html_vignette
+author: Davide Provasi
+vignette: >
+  %\VignetteIndexEntry{Programming with dplyr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
+
+---
+
+```{r}
+require(pdb2wave)
+require(tidyverse)
+```
+
+## Read waves from DFT frequencies from SI of Yu, Chi-Hua, et al.ACS nano (2019).
+```{r}
+setwd("~/Desktop/protein_sounf")
+wavpath = "FINAL SI/DFT BASED AA SOUNDS/"
+aa_waves = get_aa_waves(wavpath)
+```
+
+## 5xdj example, and compare to MP3 file from Yu, Chi-Hua, et al.ACS nano (2019).
+### Read sequence and secondary structure from csv file
+
+```{r}
+data_5xdj = get_structure_nopdb("5xdj.cc")
+wave_stereo2 = gen_tune(data_5xdj$seq,data_5xdj$ses)
+plot(wave_stereo2)
+play(wave_stereo2,player = "afplay")
+```
+
+### Read mp3 file and compare
+```{r}
+wmp3 = tuneR::readMP3("FINAL SI/5xdj.mp3")
+comp = tuneR::Wave(left=wmp3@left[1:239616], 
+            right=wave_stereo2@right[1:239616],
+            bit=16,samp.rate = 44100)
+plot(comp)
+play(comp, player = "afplay")
+```
+
+# mu-opioid receptor, from active structure, chain A
+Calculate distances from right/left reference residues
+to mimick sound localisation 
+
+```{r}
+data_5c1m = get_structure_pdb(
+  "~/5c1m_a.pdb",
+  refL_resno = 229,
+  refR_resno = 315)
+
+wave_stereo = gen_tune(
+  data_5c1m$seq, 
+  data_5c1m$ses, 
+  distL = data_5c1m$distL, 
+  distR = data_5c1m$distR)
+
+plot(wave_stereo)
+play(wave_stereo, player = "afplay")
+tuneR::writeWave(wave_stereo, filename="5c1m.wav")
+```
+
+# mu-opioid receptor, from inactive structure, chain A
+Calculate distances from right/left reference residues
+to mimick sound localisation 
+```{r}
+data_4djh = get_structure_pdb("~/4djh_a.pdb",
+                              refL_resno = 102, 
+                              refR_resno = 236)
+
+wave_stereo = gen_tune(
+  data_4djh$seq, 
+  data_4djh$ses, 
+  distL = data_4djh$distL,
+  distR = data_4djh$distR)
+
+plot(wave_stereo)
+play(wave_stereo, player = "afplay")
+tuneR::writeWave(wave_stereo, filename="4djh.wav")
+
+
+galpha = get_structure_pdb("~/3sn6_g.pdb",
+                           refL_resno = 58, 
+                           refR_resno = 231)
+
+wave_stereo_ga = gen_tune(galpha$seq, galpha$ses, distL = galpha$distL,distR = galpha$distR)
+plot(wave_stereo_ga)
+play(wave_stereo_ga, player = "afplay")
+```
+
+
